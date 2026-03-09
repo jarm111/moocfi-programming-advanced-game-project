@@ -4,4 +4,6 @@ version = "0.1.0"
 description = "Game project for University of Helsinki's MOOC Advanced Course in Programming 2026"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pygame>=2.6.1",
+]

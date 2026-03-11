@@ -23,6 +23,46 @@ class Player:
         if self.y < y and self.y < edgey - self.height:
             self.y += self.speed
 
+class Foe:
+    def __init__(self, image: pygame.Surface, speed: int, starting_pos: tuple[int, int]) -> None:
+        self.image = image
+        self.x = starting_pos[0]
+        self.y = starting_pos[1]
+        self.width = image.get_width()
+        self.height = image.get_height()
+        self.speed = speed
+        self.direction = "se"
+
+    def move(self, edges: tuple[int, int]) -> None:
+        if self.__is_edge(edges):
+            self.__change_direction()
+        if self.direction == "ne":
+            self.x += self.speed
+            self.y -= self.speed
+        if self.direction == "se":
+            self.x += self.speed
+            self.y += self.speed
+        if self.direction == "sw":
+            self.x -= self.speed
+            self.y += self.speed
+        if self.direction == "nw":
+            self.x -= self.speed
+            self.y -= self.speed
+
+    def __change_direction(self):
+        if self.direction == "ne":
+            self.direction = "se"
+        elif self.direction == "se":
+            self.direction = "sw"
+        elif self.direction == "sw":
+            self.direction = "nw"
+        else:
+            self.direction = "ne"
+
+    def __is_edge(self, edges: tuple[int, int]):
+        x, y, width, height = self.x, self.y, self.width, self.height
+        edgex, edgey = edges
+        return x < 0 or y < 0 or y + height >= edgey or x + width >= edgex
 
 class Game:
     def __init__(self, display_width: int, display_height: int) -> None:
@@ -40,10 +80,11 @@ class Game:
 
         self.player = Player(self.images["robot"], 3, (0, 0))
 
+        self.foe = Foe(self.images["foe"], 1, (300, 200))
+
         self.mouse_pos = (0, 0)
 
         self.game_loop()
-
 
     def check_events(self) -> None:
         for tapahtuma in pygame.event.get():
@@ -53,14 +94,18 @@ class Game:
                     self.mouse_pos = tapahtuma.pos
 
     def render(self) -> None:
-        self.display.fill((0, 0, 0))
-        self.display.blit(self.player.image, (self.player.x, self.player.y))
+        self.display.fill((100, 100, 200))
+        for item in [self.player, self.foe]:
+            image, pos = item.image, (item.x, item.y)
+            self.display.blit(image, pos)
         pygame.display.flip()
 
     def game_loop(self) -> None:
+        edges = (self.display_width, self.display_height)
         while True:
            self.check_events()
-           self.player.move(self.mouse_pos, (self.display_width, self.display_height))
+           self.player.move(self.mouse_pos, edges)
+           self.foe.move(edges)
            self.render()
            self.clock.tick(60)
 
@@ -74,7 +119,6 @@ class Game:
 
 def main():
     Game(640, 480)
-
 
 if __name__ == "__main__":
     main()

@@ -119,7 +119,7 @@ class Game:
 
         self.player = Player(self.images["robot"], Point(0, 0), 3)
 
-        self.foe = Foe(self.images["foe"], Point(300, 200), 1)
+        self.foes = [Foe(self.images["foe"], Point(300, 200), 1), Foe(self.images["foe"], Point(170, 170), 1)]
 
         self.coins = [Renderable(self.images["coin"], Point(250, 50)), Renderable(self.images["coin"], Point(400, 100))]
 
@@ -139,6 +139,10 @@ class Game:
         for i, coin in enumerate(self.coins):
             if detect(self.player, coin):
                 self.coins.pop(i)
+
+        for foe in self.foes:
+            if detect(self.player, foe):
+                self.game_over()
         
         if detect(self.player, self.door):
             self.enter_door()
@@ -152,7 +156,7 @@ class Game:
 
     def render(self) -> None:
         self.display.fill(BACKGROUND_COLOR)
-        for item in [self.player, self.foe, *self.coins, self.door]:
+        for item in [self.player, *self.foes, *self.coins, self.door]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
         pygame.display.flip()
@@ -163,7 +167,8 @@ class Game:
            self.handle_collisions()
            self.check_events()
            self.player.move(self.mouse_pos, edges)
-           self.foe.move(edges)
+           for foe in self.foes:
+               foe.move(edges)
            self.render()
            self.clock.tick(FPS)
 
@@ -179,6 +184,9 @@ class Game:
     def enter_door(self):
         if self.coins_remaining() == 0:
             print("WIN")
+    
+    def game_over(self):
+        print("GAME OVER")
 
 def main():
     Game(WINDOW_WIDTH, WINDOW_HEIGHT)

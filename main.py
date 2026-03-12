@@ -64,6 +64,14 @@ class Foe:
         edgex, edgey = edges
         return x < 0 or y < 0 or y + height >= edgey or x + width >= edgex
 
+class Item:
+    def __init__(self, image: pygame.Surface, starting_pos: tuple[int, int]) -> None:
+        self.image = image
+        self.x = starting_pos[0]
+        self.y = starting_pos[1]
+        self.width = image.get_width()
+        self.height = image.get_height()
+
 class Game:
     def __init__(self, display_width: int, display_height: int) -> None:
         pygame.init()
@@ -82,6 +90,10 @@ class Game:
 
         self.foe = Foe(self.images["foe"], 1, (300, 200))
 
+        self.coin = Item(self.images["coin"], (400, 100))
+
+        self.door = Item(self.images["door"], (320, 240))
+
         self.mouse_pos = (0, 0)
 
         self.game_loop()
@@ -95,7 +107,7 @@ class Game:
 
     def render(self) -> None:
         self.display.fill((100, 100, 200))
-        for item in [self.player, self.foe]:
+        for item in [self.player, self.foe, self.coin, self.door]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
         pygame.display.flip()

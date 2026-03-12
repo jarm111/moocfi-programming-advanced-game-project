@@ -18,7 +18,7 @@ IMAGES = {
 
 
 class Point:
-    def __init__(self, x, y) -> None:
+    def __init__(self, x: int , y: int) -> None:
         self.x = x
         self.y = y
     
@@ -110,12 +110,11 @@ class Level:
         self.images = images
         self.clock = clock
 
-        door, coins, foes = self.spawn(5, 3)
-        self.player = Player(images["robot"], Point(0, 0), 3)
+        player, door, coins, foes = self.spawn(5, 3)
+        self.player = player
         self.door = door
         self.coins = coins
         self.foes = foes
-
 
         self.mouse_pos = Point(0, 0)
         self.end_of_level_handler = end_of_level_handler
@@ -177,21 +176,24 @@ class Level:
     def game_over(self):
         self.end_of_level_handler("game_over")
 
-    def spawn(self, coin_amount:int, foe_amount:int) -> tuple[Renderable, list[Renderable], list[Foe]]:
-        door_location = Point(self.display.get_width() / 2 - self.images["door"].get_width() / 2, self.display.get_height() / 2  - self.images["door"].get_height() / 2)
+    def spawn(self, coin_amount:int, foe_amount:int) -> tuple[Player, Renderable, list[Renderable], list[Foe]]:
+        player_location = Point(self.display.get_width() // 2 - self.images["robot"].get_width() // 2, self.display.get_height() // 2  - self.images["robot"].get_height() // 2)
+        door_location = Point(self.display.get_width() // 2 - self.images["door"].get_width() // 2, self.display.get_height() // 2  - self.images["door"].get_height() // 2)
         coin_locations = self.generate_spawn_locations(coin_amount, self.images["coin"].get_width(), self.images["coin"].get_height())
         foe_locations = self.generate_spawn_locations(foe_amount, self.images["foe"].get_width(), self.images["foe"].get_height())
+        player = Player(self.images["robot"], player_location, 3)
         door = Renderable(self.images["door"], door_location)
         coins = [Renderable(self.images["coin"], location) for location in coin_locations]
         foes = [Foe(self.images["foe"], location, FOE_SPEED) for location in foe_locations]
-        return (door, coins, foes)
+        return (player, door, coins, foes)
     
     def generate_spawn_locations(self, amount: int, gridx: int, gridy:int) -> list[Point]:
+        mid = Point(self.display.get_width() // 2, self.display.get_height() // 2)
         locations: list[Point] = []
         for n in range(amount):
             while True:
                 location = Point(randrange(0, self.display.get_width() - gridx, gridx), randrange(0, self.display.get_height() - gridy, gridy))
-                if location not in locations or location.x not in range(0, 50) and location.y not in range(0,50):
+                if location not in locations or location.x not in range(mid.x - 100, mid.x + 100) and location.y not in range(mid.y - 80, mid.y + 80):
                     locations.append(location)
                     break
         return locations

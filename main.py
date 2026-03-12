@@ -9,6 +9,8 @@ GAME_TITLE = "Hot Coins"
 BACKGROUND_COLOR = (100, 100, 200)
 PLAYER_SPEED = 3
 FOE_SPEED = 1
+COIN_PROGRESSION_PACE = 2
+FOE_PROGRESSION_PACE = 3
 IMAGES = {
             "robot": "robo.png",
             "door": "ovi.png",
@@ -24,6 +26,21 @@ class Point:
     
     def tuple(self) -> tuple[int, int]:
         return (self.x, self.y)
+
+class Counter:
+    def __init__(self, initial_value: int) -> None:
+        self.__value = initial_value
+        self.__initial_value = initial_value
+    
+    @property
+    def value(self) -> int:
+        return self.__value
+    
+    def increment(self) -> None:
+        self.__value += 1
+
+    def reset(self) -> None:
+        self.__value = self.__initial_value
 
 class Renderable:
     def __init__(self, image: pygame.Surface, starting_pos: Point) -> None:
@@ -105,12 +122,12 @@ class Foe(Renderable):
         return x < 0 or y < 0 or y + height >= edgey or x + width >= edgex
 
 class Level:
-    def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler) -> None:
+    def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler, number_of_coins: int, number_of_foes: int) -> None:
         self.display = display
         self.images = images
         self.clock = clock
 
-        player, door, coins, foes = self.spawn(5, 3)
+        player, door, coins, foes = self.spawn(number_of_coins, number_of_foes)
         self.player = player
         self.door = door
         self.coins = coins
@@ -193,7 +210,7 @@ class Level:
         for n in range(amount):
             while True:
                 location = Point(randrange(0, self.display.get_width() - gridx, gridx), randrange(0, self.display.get_height() - gridy, gridy))
-                if location not in locations or location.x not in range(mid.x - 100, mid.x + 100) and location.y not in range(mid.y - 80, mid.y + 80):
+                if location not in locations or location.x not in range(mid.x - 100, mid.x + 100) and location.y not in range(mid.y - 100, mid.y + 100):
                     locations.append(location)
                     break
         return locations
@@ -205,14 +222,26 @@ class Game:
         pygame.display.set_caption(GAME_TITLE)
         self.clock = pygame.time.Clock()
         self.images = self.load_images()
+        self.levelcount = Counter(1)
         self.level = self.end_of_level_handler("next_level")
 
     def load_images(self) -> dict[str, pygame.Surface]:
         return {name: pygame.image.load(path) for (name, path) in IMAGES.items()}
     
     def end_of_level_handler(self, condition: str):
-        if condition in ("game_over","next_level"):
-            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler)
+
+        if condition == "next_level":
+            self.levelcount.increment()
+            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression())
+        elif condition == "game_over":
+            self.levelcount.reset()
+            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression())
+
+    def level_progression(self) -> tuple[int, int]:
+        coins = 1 + self.levelcount.value // 2
+        foes = 1 + self.levelcount.value // 3
+        print(self.levelcount.value)
+        return (coins, foes)
 
 def main():
     Game(WINDOW_WIDTH, WINDOW_HEIGHT)

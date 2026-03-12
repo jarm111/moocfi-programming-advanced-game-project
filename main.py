@@ -1,21 +1,44 @@
 import pygame
 
+class Point:
+    def __init__(self, x, y) -> None:
+        self.x = x
+        self.y = y
+    
+    def tuple(self) -> tuple[int, int]:
+        return (self.x, self.y)
+
 class Renderable:
-    def __init__(self, image: pygame.Surface, starting_pos: tuple[int, int]) -> None:
+    def __init__(self, image: pygame.Surface, starting_pos: Point) -> None:
         self.image = image
-        self.x = starting_pos[0]
-        self.y = starting_pos[1]
+        self.position = starting_pos
         self.width = image.get_width()
         self.height = image.get_height()
 
+    @property
+    def x(self):
+        return self.position.x
+    
+    @property
+    def y(self):
+        return self.position.y
+    
+    @x.setter
+    def x(self, value):
+        self.position = Point(value, self.position.y)
+
+    @y.setter
+    def y(self, value):
+        self.position = Point(self.position.x, value)
+
 class Player(Renderable):
-    def __init__(self, image: pygame.Surface, starting_pos: tuple[int, int], speed: int, ) -> None:
+    def __init__(self, image: pygame.Surface, starting_pos: Point, speed: int, ) -> None:
         super().__init__(image, starting_pos)
         self.speed = speed
 
-    def move(self, pos: tuple[int, int], edges: tuple[int, int]) -> None:
-        edgex, edgey = edges
-        x, y = pos
+    def move(self, pos: Point, edges: Point) -> None:
+        edgex, edgey = edges.tuple()
+        x, y = pos.tuple()
         x = x - self.width / 2
         y = y - self.height / 2
         if self.x > x and self.x > 0:
@@ -28,12 +51,12 @@ class Player(Renderable):
             self.y += self.speed
 
 class Foe(Renderable):
-    def __init__(self, image: pygame.Surface, starting_pos: tuple[int, int], speed: int) -> None:
+    def __init__(self, image: pygame.Surface, starting_pos: Point, speed: int) -> None:
         super().__init__(image, starting_pos)
         self.speed = speed
         self.direction = "se"
 
-    def move(self, edges: tuple[int, int]) -> None:
+    def move(self, edges: Point) -> None:
         if self.__is_edge(edges):
             self.__change_direction()
         if self.direction == "ne":
@@ -59,9 +82,9 @@ class Foe(Renderable):
         else:
             self.direction = "ne"
 
-    def __is_edge(self, edges: tuple[int, int]):
+    def __is_edge(self, edges: Point):
         x, y, width, height = self.x, self.y, self.width, self.height
-        edgex, edgey = edges
+        edgex, edgey = edges.tuple()
         return x < 0 or y < 0 or y + height >= edgey or x + width >= edgex
 
 class Game:
@@ -78,15 +101,15 @@ class Game:
 
         self.images = self.load_images()
 
-        self.player = Player(self.images["robot"], (0, 0), 3)
+        self.player = Player(self.images["robot"], Point(0, 0), 3)
 
-        self.foe = Foe(self.images["foe"], (300, 200), 1)
+        self.foe = Foe(self.images["foe"], Point(300, 200), 1)
 
-        self.coin = Renderable(self.images["coin"], (400, 100))
+        self.coin = Renderable(self.images["coin"], Point(400, 100))
 
-        self.door = Renderable(self.images["door"], (320, 240))
+        self.door = Renderable(self.images["door"], Point(320, 240))
 
-        self.mouse_pos = (0, 0)
+        self.mouse_pos = Point(0, 0)
 
         self.game_loop()
 
@@ -95,7 +118,7 @@ class Game:
                 if tapahtuma.type == pygame.QUIT:
                     exit()
                 if tapahtuma.type == pygame.MOUSEMOTION:
-                    self.mouse_pos = tapahtuma.pos
+                    self.mouse_pos = Point(*tapahtuma.pos)
 
     def render(self) -> None:
         self.display.fill((100, 100, 200))
@@ -105,7 +128,7 @@ class Game:
         pygame.display.flip()
 
     def game_loop(self) -> None:
-        edges = (self.display_width, self.display_height)
+        edges = Point(self.display_width, self.display_height)
         while True:
            self.check_events()
            self.player.move(self.mouse_pos, edges)

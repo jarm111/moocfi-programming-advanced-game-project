@@ -129,7 +129,7 @@ class Game:
 
         self.game_loop()
 
-    def detect_collisions(self) -> None:
+    def handle_collisions(self) -> None:
         def detect(a: Renderable, b: Renderable) -> bool:
             return (a.x < b.x + b.width and
                     a.x + a.width > b.x and
@@ -139,6 +139,9 @@ class Game:
         for i, coin in enumerate(self.coins):
             if detect(self.player, coin):
                 self.coins.pop(i)
+        
+        if detect(self.player, self.door):
+            self.enter_door()
 
     def check_events(self) -> None:
         for tapahtuma in pygame.event.get():
@@ -157,7 +160,7 @@ class Game:
     def game_loop(self) -> None:
         edges = Point(self.display_width, self.display_height)
         while True:
-           self.detect_collisions()
+           self.handle_collisions()
            self.check_events()
            self.player.move(self.mouse_pos, edges)
            self.foe.move(edges)
@@ -167,8 +170,15 @@ class Game:
     def load_images(self) -> dict[str, pygame.Surface]:
         return {name: pygame.image.load(path) for (name, path) in IMAGES.items()}
     
-    
+    def coins_remaining(self):
+        return len(self.coins)
 
+    def pick_up_coin(self, coin_index: int):
+        self.coins.pop(coin_index)
+
+    def enter_door(self):
+        if self.coins_remaining() == 0:
+            print("WIN")
 
 def main():
     Game(WINDOW_WIDTH, WINDOW_HEIGHT)

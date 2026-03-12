@@ -9,6 +9,8 @@ GAME_TITLE = "Hot Coins"
 BACKGROUND_COLOR = (100, 100, 200)
 PLAYER_SPEED = 3
 FOE_SPEED = 1
+COIN_SAFE_ZONE = 70
+FOE_SAFE_ZONE = 140
 COIN_PROGRESSION_PACE = 2
 FOE_PROGRESSION_PACE = 3
 IMAGES = {
@@ -196,21 +198,21 @@ class Level:
     def spawn(self, coin_amount:int, foe_amount:int) -> tuple[Player, Renderable, list[Renderable], list[Foe]]:
         player_location = Point(self.display.get_width() // 2 - self.images["robot"].get_width() // 2, self.display.get_height() // 2  - self.images["robot"].get_height() // 2)
         door_location = Point(self.display.get_width() // 2 - self.images["door"].get_width() // 2, self.display.get_height() // 2  - self.images["door"].get_height() // 2)
-        coin_locations = self.generate_spawn_locations(coin_amount, self.images["coin"].get_width(), self.images["coin"].get_height())
-        foe_locations = self.generate_spawn_locations(foe_amount, self.images["foe"].get_width(), self.images["foe"].get_height())
+        coin_locations = self.generate_spawn_locations(coin_amount, self.images["coin"].get_width(), self.images["coin"].get_height(), COIN_SAFE_ZONE)
+        foe_locations = self.generate_spawn_locations(foe_amount, self.images["foe"].get_width(), self.images["foe"].get_height(), FOE_SAFE_ZONE)
         player = Player(self.images["robot"], player_location, 3)
         door = Renderable(self.images["door"], door_location)
         coins = [Renderable(self.images["coin"], location) for location in coin_locations]
         foes = [Foe(self.images["foe"], location, FOE_SPEED) for location in foe_locations]
         return (player, door, coins, foes)
     
-    def generate_spawn_locations(self, amount: int, gridx: int, gridy:int) -> list[Point]:
+    def generate_spawn_locations(self, amount: int, gridx: int, gridy:int, safe_zone: int) -> list[Point]:
         mid = Point(self.display.get_width() // 2, self.display.get_height() // 2)
         locations: list[Point] = []
         for n in range(amount):
             while True:
                 location = Point(randrange(0, self.display.get_width() - gridx, gridx), randrange(0, self.display.get_height() - gridy, gridy))
-                if location not in locations or location.x not in range(mid.x - 100, mid.x + 100) and location.y not in range(mid.y - 100, mid.y + 100):
+                if location not in locations or location.x not in range(mid.x - safe_zone, mid.x + safe_zone) and location.y not in range(mid.y - safe_zone, mid.y + safe_zone):
                     locations.append(location)
                     break
         return locations

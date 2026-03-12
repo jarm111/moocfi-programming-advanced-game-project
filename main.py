@@ -1,4 +1,5 @@
 import pygame
+from random import randrange
 
 # CONSTANTS
 WINDOW_WIDTH = 640
@@ -106,11 +107,16 @@ class Foe(Renderable):
 class Level:
     def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler) -> None:
         self.display = display
+        self.images = images
         self.clock = clock
+
+        door, coins, foes = self.spawn(5, 3)
         self.player = Player(images["robot"], Point(0, 0), 3)
-        self.foes = [Foe(images["foe"], Point(300, 200), 1), Foe(images["foe"], Point(170, 170), 1)]
-        self.coins = [Renderable(images["coin"], Point(250, 50)), Renderable(images["coin"], Point(400, 100))]
-        self.door = Renderable(images["door"], Point(320, 240))
+        self.door = door
+        self.coins = coins
+        self.foes = foes
+
+
         self.mouse_pos = Point(0, 0)
         self.end_of_level_handler = end_of_level_handler
         self.game_loop()
@@ -142,7 +148,7 @@ class Level:
 
     def render(self) -> None:
         self.display.fill(BACKGROUND_COLOR)
-        for item in [self.player, *self.foes, *self.coins, self.door]:
+        for item in [self.door, *self.coins, *self.foes, self.player]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
         pygame.display.flip()
@@ -170,6 +176,25 @@ class Level:
     
     def game_over(self):
         self.end_of_level_handler("game_over")
+
+    def spawn(self, coin_amount:int, foe_amount:int) -> tuple[Renderable, list[Renderable], list[Foe]]:
+        door_location = Point(self.display.get_width() / 2 - self.images["door"].get_width() / 2, self.display.get_height() / 2  - self.images["door"].get_height() / 2)
+        coin_locations = self.generate_spawn_locations(coin_amount, self.images["coin"].get_width(), self.images["coin"].get_height())
+        foe_locations = self.generate_spawn_locations(foe_amount, self.images["foe"].get_width(), self.images["foe"].get_height())
+        door = Renderable(self.images["door"], door_location)
+        coins = [Renderable(self.images["coin"], location) for location in coin_locations]
+        foes = [Foe(self.images["foe"], location, FOE_SPEED) for location in foe_locations]
+        return (door, coins, foes)
+    
+    def generate_spawn_locations(self, amount: int, gridx: int, gridy:int) -> list[Point]:
+        locations: list[Point] = []
+        for n in range(amount):
+            while True:
+                location = Point(randrange(0, self.display.get_width() - gridx, gridx), randrange(0, self.display.get_height() - gridy, gridy))
+                if location not in locations or location.x not in range(0, 50) and location.y not in range(0,50):
+                    locations.append(location)
+                    break
+        return locations
 
 class Game:
     def __init__(self, display_width: int, display_height: int) -> None:

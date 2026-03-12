@@ -1,5 +1,21 @@
 import pygame
 
+# CONSTANTS
+WINDOW_WIDTH = 640
+WINDOW_HEIGHT = 480
+FPS = 60
+GAME_TITLE = "Hot Coins"
+BACKGROUND_COLOR = (100, 100, 200)
+PLAYER_SPEED = 3
+FOE_SPEED = 1
+IMAGES = {
+            "robot": "robo.png",
+            "door": "ovi.png",
+            "coin": "kolikko.png",
+            "foe": "hirvio.png"
+        }
+
+
 class Point:
     def __init__(self, x, y) -> None:
         self.x = x
@@ -95,7 +111,7 @@ class Game:
         self.display_height = display_height
         self.display = pygame.display.set_mode(((self.display_width, self.display_height)))
 
-        pygame.display.set_caption("Robo Rush")
+        pygame.display.set_caption(GAME_TITLE)
 
         self.clock = pygame.time.Clock()
 
@@ -121,7 +137,7 @@ class Game:
                     self.mouse_pos = Point(*tapahtuma.pos)
 
     def render(self) -> None:
-        self.display.fill((100, 100, 200))
+        self.display.fill(BACKGROUND_COLOR)
         for item in [self.player, self.foe, self.coin, self.door]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
@@ -134,18 +150,13 @@ class Game:
            self.player.move(self.mouse_pos, edges)
            self.foe.move(edges)
            self.render()
-           self.clock.tick(60)
+           self.clock.tick(FPS)
 
     def load_images(self) -> dict[str, pygame.Surface]:
-        return {
-            "robot": pygame.image.load("robo.png"),
-            "door": pygame.image.load("ovi.png"),
-            "coin": pygame.image.load("kolikko.png"),
-            "foe": pygame.image.load("hirvio.png")
-        }
+        return {name: pygame.image.load(path) for (name, path) in IMAGES.items()}
 
 def main():
-    Game(640, 480)
+    Game(WINDOW_WIDTH, WINDOW_HEIGHT)
 
 if __name__ == "__main__":
     main()

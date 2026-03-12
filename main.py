@@ -1,12 +1,16 @@
 import pygame
 
-class Player:
-    def __init__(self, image: pygame.Surface, speed: int, starting_pos: tuple[int, int]) -> None:
+class Renderable:
+    def __init__(self, image: pygame.Surface, starting_pos: tuple[int, int]) -> None:
         self.image = image
         self.x = starting_pos[0]
         self.y = starting_pos[1]
         self.width = image.get_width()
         self.height = image.get_height()
+
+class Player(Renderable):
+    def __init__(self, image: pygame.Surface, starting_pos: tuple[int, int], speed: int, ) -> None:
+        super().__init__(image, starting_pos)
         self.speed = speed
 
     def move(self, pos: tuple[int, int], edges: tuple[int, int]) -> None:
@@ -23,13 +27,9 @@ class Player:
         if self.y < y and self.y < edgey - self.height:
             self.y += self.speed
 
-class Foe:
-    def __init__(self, image: pygame.Surface, speed: int, starting_pos: tuple[int, int]) -> None:
-        self.image = image
-        self.x = starting_pos[0]
-        self.y = starting_pos[1]
-        self.width = image.get_width()
-        self.height = image.get_height()
+class Foe(Renderable):
+    def __init__(self, image: pygame.Surface, starting_pos: tuple[int, int], speed: int) -> None:
+        super().__init__(image, starting_pos)
         self.speed = speed
         self.direction = "se"
 
@@ -64,14 +64,6 @@ class Foe:
         edgex, edgey = edges
         return x < 0 or y < 0 or y + height >= edgey or x + width >= edgex
 
-class Item:
-    def __init__(self, image: pygame.Surface, starting_pos: tuple[int, int]) -> None:
-        self.image = image
-        self.x = starting_pos[0]
-        self.y = starting_pos[1]
-        self.width = image.get_width()
-        self.height = image.get_height()
-
 class Game:
     def __init__(self, display_width: int, display_height: int) -> None:
         pygame.init()
@@ -86,13 +78,13 @@ class Game:
 
         self.images = self.load_images()
 
-        self.player = Player(self.images["robot"], 3, (0, 0))
+        self.player = Player(self.images["robot"], (0, 0), 3)
 
-        self.foe = Foe(self.images["foe"], 1, (300, 200))
+        self.foe = Foe(self.images["foe"], (300, 200), 1)
 
-        self.coin = Item(self.images["coin"], (400, 100))
+        self.coin = Renderable(self.images["coin"], (400, 100))
 
-        self.door = Item(self.images["door"], (320, 240))
+        self.door = Renderable(self.images["door"], (320, 240))
 
         self.mouse_pos = (0, 0)
 

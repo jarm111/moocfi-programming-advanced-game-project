@@ -103,30 +103,16 @@ class Foe(Renderable):
         edgex, edgey = edges.tuple()
         return x < 0 or y < 0 or y + height >= edgey or x + width >= edgex
 
-class Game:
-    def __init__(self, display_width: int, display_height: int) -> None:
-        pygame.init()
-
-        self.display_width = display_width
-        self.display_height = display_height
-        self.display = pygame.display.set_mode(((self.display_width, self.display_height)))
-
-        pygame.display.set_caption(GAME_TITLE)
-
-        self.clock = pygame.time.Clock()
-
-        self.images = self.load_images()
-
-        self.player = Player(self.images["robot"], Point(0, 0), 3)
-
-        self.foes = [Foe(self.images["foe"], Point(300, 200), 1), Foe(self.images["foe"], Point(170, 170), 1)]
-
-        self.coins = [Renderable(self.images["coin"], Point(250, 50)), Renderable(self.images["coin"], Point(400, 100))]
-
-        self.door = Renderable(self.images["door"], Point(320, 240))
-
+class Level:
+    def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler) -> None:
+        self.display = display
+        self.clock = clock
+        self.player = Player(images["robot"], Point(0, 0), 3)
+        self.foes = [Foe(images["foe"], Point(300, 200), 1), Foe(images["foe"], Point(170, 170), 1)]
+        self.coins = [Renderable(images["coin"], Point(250, 50)), Renderable(images["coin"], Point(400, 100))]
+        self.door = Renderable(images["door"], Point(320, 240))
         self.mouse_pos = Point(0, 0)
-
+        self.end_of_level_handler = end_of_level_handler
         self.game_loop()
 
     def handle_collisions(self) -> None:
@@ -162,7 +148,7 @@ class Game:
         pygame.display.flip()
 
     def game_loop(self) -> None:
-        edges = Point(self.display_width, self.display_height)
+        edges = Point(self.display.get_width(), self.display.get_height())
         while True:
            self.handle_collisions()
            self.check_events()
@@ -172,9 +158,6 @@ class Game:
            self.render()
            self.clock.tick(FPS)
 
-    def load_images(self) -> dict[str, pygame.Surface]:
-        return {name: pygame.image.load(path) for (name, path) in IMAGES.items()}
-    
     def coins_remaining(self):
         return len(self.coins)
 
@@ -183,10 +166,26 @@ class Game:
 
     def enter_door(self):
         if self.coins_remaining() == 0:
-            print("WIN")
+            self.end_of_level_handler("next_level")
     
     def game_over(self):
-        print("GAME OVER")
+        self.end_of_level_handler("game_over")
+
+class Game:
+    def __init__(self, display_width: int, display_height: int) -> None:
+        pygame.init()
+        self.display = pygame.display.set_mode(((display_width, display_height)))
+        pygame.display.set_caption(GAME_TITLE)
+        self.clock = pygame.time.Clock()
+        self.images = self.load_images()
+        self.level = self.end_of_level_handler("next_level")
+
+    def load_images(self) -> dict[str, pygame.Surface]:
+        return {name: pygame.image.load(path) for (name, path) in IMAGES.items()}
+    
+    def end_of_level_handler(self, condition: str):
+        if condition in ("game_over","next_level"):
+            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler)
 
 def main():
     Game(WINDOW_WIDTH, WINDOW_HEIGHT)

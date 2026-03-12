@@ -121,7 +121,7 @@ class Game:
 
         self.foe = Foe(self.images["foe"], Point(300, 200), 1)
 
-        self.coin = Renderable(self.images["coin"], Point(400, 100))
+        self.coins = [Renderable(self.images["coin"], Point(250, 50)), Renderable(self.images["coin"], Point(400, 100))]
 
         self.door = Renderable(self.images["door"], Point(320, 240))
 
@@ -136,8 +136,9 @@ class Game:
                     a.y < b.y + b.height and
                     a.y + a.height > b.y)
         
-        if detect(self.player, self.coin):
-            print("player hits coin")
+        for i, coin in enumerate(self.coins):
+            if detect(self.player, coin):
+                self.coins.pop(i)
 
     def check_events(self) -> None:
         for tapahtuma in pygame.event.get():
@@ -148,7 +149,7 @@ class Game:
 
     def render(self) -> None:
         self.display.fill(BACKGROUND_COLOR)
-        for item in [self.player, self.foe, self.coin, self.door]:
+        for item in [self.player, self.foe, *self.coins, self.door]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
         pygame.display.flip()

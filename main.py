@@ -190,7 +190,7 @@ class Level:
         pygame.display.flip()
 
     def game_loop(self) -> None:
-        edges = Point(self.display.get_width(), self.display.get_height())
+        edges = Point(self.display.get_width(), self.display.get_height() - HUD_HEIGHT)
         while True:
            self.handle_collisions()
            self.check_events()
@@ -214,8 +214,8 @@ class Level:
         self.end_of_level_handler("game_over")
 
     def spawn(self, coin_amount:int, foe_amount:int) -> tuple[Player, Renderable, list[Renderable], list[Foe]]:
-        player_location = Point(self.display.get_width() // 2 - self.images["robot"].get_width() // 2, self.display.get_height() // 2  - self.images["robot"].get_height() // 2)
-        door_location = Point(self.display.get_width() // 2 - self.images["door"].get_width() // 2, self.display.get_height() // 2  - self.images["door"].get_height() // 2)
+        player_location = Point(self.display.get_width() // 2 - self.images["robot"].get_width() // 2, (self.display.get_height() - HUD_HEIGHT) // 2  - self.images["robot"].get_height() // 2)
+        door_location = Point(self.display.get_width() // 2 - self.images["door"].get_width() // 2, (self.display.get_height() - HUD_HEIGHT) // 2  - self.images["door"].get_height() // 2)
         coin_locations = self.generate_spawn_locations(coin_amount, self.images["coin"].get_width(), self.images["coin"].get_height(), COIN_SAFE_ZONE)
         foe_locations = self.generate_spawn_locations(foe_amount, self.images["foe"].get_width(), self.images["foe"].get_height(), FOE_SAFE_ZONE)
         player = Player(self.images["robot"], player_location, 3)

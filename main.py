@@ -7,6 +7,11 @@ WINDOW_HEIGHT = 480
 FPS = 60
 GAME_TITLE = "Hot Coins"
 BACKGROUND_COLOR = (100, 100, 200)
+HUD_BG_COLOR = (0, 0, 0)
+HUD_FONT_COLOR = (255, 255, 255)
+HUD_HEIGHT = 30
+HUD_FONT = "Arial"
+HUD_FONT_SIZE = 20
 PLAYER_SPEED = 3
 FOE_SPEED = 1
 COIN_SAFE_ZONE = 70
@@ -14,11 +19,11 @@ FOE_SAFE_ZONE = 140
 COIN_PROGRESSION_PACE = 2
 FOE_PROGRESSION_PACE = 3
 IMAGES = {
-            "robot": "robo.png",
-            "door": "ovi.png",
-            "coin": "kolikko.png",
-            "foe": "hirvio.png"
-        }
+    "robot": "robo.png",
+    "door": "ovi.png",
+    "coin": "kolikko.png",
+    "foe": "hirvio.png"
+    }
 
 
 class Point:
@@ -75,8 +80,8 @@ class Player(Renderable):
     def move(self, pos: Point, edges: Point) -> None:
         edgex, edgey = edges.tuple()
         x, y = pos.tuple()
-        x = x - self.width / 2
-        y = y - self.height / 2
+        x = x - self.width // 2
+        y = y - self.height // 2
         if self.x > x and self.x > 0:
             self.x -= self.speed
         if self.x < x and self.x < edgex - self.width:
@@ -123,11 +128,23 @@ class Foe(Renderable):
         edgex, edgey = edges.tuple()
         return x < 0 or y < 0 or y + height >= edgey or x + width >= edgex
 
+class Hud:
+    def __init__(self, display: pygame.Surface) -> None:
+        self.display = display
+        self.font = pygame.font.SysFont(HUD_FONT, HUD_FONT_SIZE)
+
+    def draw(self, coins_remaining: int):
+        hud_text = f"Coins remaining: {coins_remaining}"
+        pygame.draw.rect(self.display, HUD_BG_COLOR, (0, WINDOW_HEIGHT - HUD_HEIGHT, WINDOW_WIDTH, HUD_HEIGHT))
+        rendered_text = self.font.render(hud_text, True, HUD_FONT_COLOR)
+        self.display.blit(rendered_text, (10, WINDOW_HEIGHT - HUD_HEIGHT + 3))
+
 class Level:
     def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler, number_of_coins: int, number_of_foes: int) -> None:
         self.display = display
         self.images = images
         self.clock = clock
+        self.hud = Hud(display)
 
         player, door, coins, foes = self.spawn(number_of_coins, number_of_foes)
         self.player = player
@@ -169,6 +186,7 @@ class Level:
         for item in [self.door, *self.coins, *self.foes, self.player]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
+        self.hud.draw(self.coins_remaining())
         pygame.display.flip()
 
     def game_loop(self) -> None:
@@ -240,8 +258,8 @@ class Game:
             self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression())
 
     def level_progression(self) -> tuple[int, int]:
-        coins = 1 + self.levelcount.value // 2
-        foes = 1 + self.levelcount.value // 3
+        coins = 1 + self.levelcount.value // COIN_PROGRESSION_PACE
+        foes = 1 + self.levelcount.value // FOE_PROGRESSION_PACE
         print(self.levelcount.value)
         return (coins, foes)
 

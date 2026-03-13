@@ -5,7 +5,7 @@ from random import randrange
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 480
 FPS = 60
-GAME_TITLE = "Hot Coins"
+GAME_TITLE = "A PENNY FOR YOUR TIME"
 BACKGROUND_COLOR = (100, 100, 200)
 HUD_BG_COLOR = (0, 0, 0)
 HUD_FONT_COLOR = (255, 255, 255)
@@ -19,6 +19,7 @@ COIN_SAFE_ZONE = 70
 FOE_SAFE_ZONE = 140
 COIN_PROGRESSION_PACE = 2
 FOE_PROGRESSION_PACE = 3
+WAIT_TIME_BETWEEN_LEVELS = 1000
 IMAGES = {
     "robot": "robo.png",
     "door": "ovi.png",
@@ -174,6 +175,7 @@ class Level:
 
         self.mouse_pos = Point(0, 0)
         self.end_of_level_handler = end_of_level_handler
+        self.first_pass = True
         self.game_loop()
 
     def handle_collisions(self) -> None:
@@ -225,6 +227,9 @@ class Level:
             for foe in self.foes:
                 foe.move(edges)
             self.render()
+            if self.first_pass:
+                self.wait()
+                self.first_pass = False
             self.clock.tick(FPS)
 
     def coins_remaining(self):
@@ -239,6 +244,7 @@ class Level:
     
     def game_over(self):
         self.timer.disable()
+        self.wait()
         self.end_of_level_handler("game_over")
 
     def spawn(self, coin_amount:int, foe_amount:int) -> tuple[Player, Renderable, list[Renderable], list[Foe]]:
@@ -262,6 +268,9 @@ class Level:
                     locations.append(location)
                     break
         return locations
+    
+    def wait(self):
+        pygame.time.wait(WAIT_TIME_BETWEEN_LEVELS)
 
 class Game:
     def __init__(self, display_width: int, display_height: int) -> None:

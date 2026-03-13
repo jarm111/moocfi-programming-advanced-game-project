@@ -12,6 +12,7 @@ HUD_FONT_COLOR = (255, 255, 255)
 HUD_HEIGHT = 30
 HUD_FONT = "Arial"
 HUD_FONT_SIZE = 20
+LEVEL_TIME_LIMIT = 30
 PLAYER_SPEED = 3
 FOE_SPEED = 1
 COIN_SAFE_ZONE = 70
@@ -25,6 +26,8 @@ IMAGES = {
     "foe": "hirvio.png"
     }
 
+# EVENTS
+ONE_SECOND_TIMER_EVENT = pygame.USEREVENT + 1
 
 class Point:
     def __init__(self, x: int , y: int) -> None:
@@ -45,6 +48,10 @@ class Counter:
     
     def increment(self) -> None:
         self.__value += 1
+
+    def decrement(self) -> None:
+        if self.__value > 0:
+            self.__value -= 1
 
     def reset(self) -> None:
         self.__value = self.__initial_value
@@ -133,18 +140,31 @@ class Hud:
         self.display = display
         self.font = pygame.font.SysFont(HUD_FONT, HUD_FONT_SIZE)
 
-    def draw(self, coins_remaining: int):
-        hud_text = f"Coins remaining: {coins_remaining}"
+    def draw(self, coins_remaining: int, time_remaining: int):
+        hud_text = f"Coins remaining: {coins_remaining}   Time remaining: {time_remaining}"
         pygame.draw.rect(self.display, HUD_BG_COLOR, (0, WINDOW_HEIGHT - HUD_HEIGHT, WINDOW_WIDTH, HUD_HEIGHT))
         rendered_text = self.font.render(hud_text, True, HUD_FONT_COLOR)
         self.display.blit(rendered_text, (10, WINDOW_HEIGHT - HUD_HEIGHT + 3))
+
+class Timer:
+    # Interval in milliseconds
+    def __init__(self, event: int, interval: int) -> None:
+        self.event = event
+        pygame.time.set_timer(event, interval)
+    
+    def disable(self):
+        pygame.time.set_timer(self.event, 0)
+
 
 class Level:
     def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler, number_of_coins: int, number_of_foes: int) -> None:
         self.display = display
         self.images = images
         self.clock = clock
+
         self.hud = Hud(display)
+        self.time_remaining = Counter(LEVEL_TIME_LIMIT)
+        self.timer = Timer(ONE_SECOND_TIMER_EVENT, 1000)
 
         player, door, coins, foes = self.spawn(number_of_coins, number_of_foes)
         self.player = player
@@ -180,25 +200,32 @@ class Level:
                     exit()
                 if tapahtuma.type == pygame.MOUSEMOTION:
                     self.mouse_pos = Point(*tapahtuma.pos)
+                if tapahtuma.type == ONE_SECOND_TIMER_EVENT:
+                    self.time_remaining.decrement()
+
+    def check_time_remaining(self) -> None:
+        if self.time_remaining.value == 0:
+            self.game_over()
 
     def render(self) -> None:
         self.display.fill(BACKGROUND_COLOR)
         for item in [self.door, *self.coins, *self.foes, self.player]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
-        self.hud.draw(self.coins_remaining())
+        self.hud.draw(self.coins_remaining(), self.time_remaining.value)
         pygame.display.flip()
 
     def game_loop(self) -> None:
         edges = Point(self.display.get_width(), self.display.get_height() - HUD_HEIGHT)
         while True:
-           self.handle_collisions()
-           self.check_events()
-           self.player.move(self.mouse_pos, edges)
-           for foe in self.foes:
-               foe.move(edges)
-           self.render()
-           self.clock.tick(FPS)
+            self.handle_collisions()
+            self.check_events()
+            self.check_time_remaining()
+            self.player.move(self.mouse_pos, edges)
+            for foe in self.foes:
+                foe.move(edges)
+            self.render()
+            self.clock.tick(FPS)
 
     def coins_remaining(self):
         return len(self.coins)
@@ -211,6 +238,7 @@ class Level:
             self.end_of_level_handler("next_level")
     
     def game_over(self):
+        self.timer.disable()
         self.end_of_level_handler("game_over")
 
     def spawn(self, coin_amount:int, foe_amount:int) -> tuple[Player, Renderable, list[Renderable], list[Foe]]:
@@ -260,7 +288,6 @@ class Game:
     def level_progression(self) -> tuple[int, int]:
         coins = 1 + self.levelcount.value // COIN_PROGRESSION_PACE
         foes = 1 + self.levelcount.value // FOE_PROGRESSION_PACE
-        print(self.levelcount.value)
         return (coins, foes)
 
 def main():

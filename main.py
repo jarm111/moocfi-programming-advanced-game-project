@@ -18,8 +18,10 @@ PLAYER_SPEED = 3
 FOE_SPEED = 1
 COIN_SAFE_ZONE = 70
 FOE_SAFE_ZONE = 140
-COIN_PROGRESSION_PACE = 2
-FOE_PROGRESSION_PACE = 3
+COIN_PROGRESSION_PACE = 1
+FOE_PROGRESSION_PACE = 2
+MAX_COINS = 20
+MAX_FOES = 10
 WAIT_TIME_BETWEEN_LEVELS = 1000
 IMAGES = {
     "robot": "robo.png",
@@ -309,8 +311,8 @@ class Game:
             self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression(), self.levelcount.value, self.bestlevel)
 
     def level_progression(self) -> tuple[int, int]:
-        coins = 1 + self.levelcount.value // COIN_PROGRESSION_PACE
-        foes = 1 + self.levelcount.value // FOE_PROGRESSION_PACE
+        coins = min(1 + self.levelcount.value // COIN_PROGRESSION_PACE, MAX_COINS)
+        foes = min(1 + self.levelcount.value // FOE_PROGRESSION_PACE, MAX_FOES)
         return (coins, foes)
     
     def define_best_level(self):

@@ -141,8 +141,8 @@ class Hud:
         self.display = display
         self.font = pygame.font.SysFont(HUD_FONT, HUD_FONT_SIZE)
 
-    def draw(self, coins_remaining: int, time_remaining: int):
-        hud_text = f"Coins remaining: {coins_remaining}   Time remaining: {time_remaining}"
+    def draw(self, coins_remaining: int, time_remaining: int, levelcount: int):
+        hud_text = f"Coins remaining: {coins_remaining}   Time remaining: {time_remaining}   Level: {levelcount}"
         pygame.draw.rect(self.display, HUD_BG_COLOR, (0, WINDOW_HEIGHT - HUD_HEIGHT, WINDOW_WIDTH, HUD_HEIGHT))
         rendered_text = self.font.render(hud_text, True, HUD_FONT_COLOR)
         self.display.blit(rendered_text, (10, WINDOW_HEIGHT - HUD_HEIGHT + 3))
@@ -158,7 +158,7 @@ class Timer:
 
 
 class Level:
-    def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler, number_of_coins: int, number_of_foes: int) -> None:
+    def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler, number_of_coins: int, number_of_foes: int, levelcount: int) -> None:
         self.display = display
         self.images = images
         self.clock = clock
@@ -166,6 +166,7 @@ class Level:
         self.hud = Hud(display)
         self.time_remaining = Counter(LEVEL_TIME_LIMIT)
         self.timer = Timer(ONE_SECOND_TIMER_EVENT, 1000)
+        self.levelcount = levelcount
 
         player, door, coins, foes = self.spawn(number_of_coins, number_of_foes)
         self.player = player
@@ -214,7 +215,7 @@ class Level:
         for item in [self.door, *self.coins, *self.foes, self.player]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
-        self.hud.draw(self.coins_remaining(), self.time_remaining.value)
+        self.hud.draw(self.coins_remaining(), self.time_remaining.value, self.levelcount)
         pygame.display.flip()
 
     def game_loop(self) -> None:
@@ -289,10 +290,10 @@ class Game:
 
         if condition == "next_level":
             self.levelcount.increment()
-            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression())
+            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression(), self.levelcount.value)
         elif condition == "game_over":
             self.levelcount.reset()
-            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression())
+            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression(), self.levelcount.value)
 
     def level_progression(self) -> tuple[int, int]:
         coins = 1 + self.levelcount.value // COIN_PROGRESSION_PACE

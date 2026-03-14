@@ -16,12 +16,12 @@ INFO_FONT_SIZE = 40
 LEVEL_TIME_LIMIT = 30
 PLAYER_SPEED = 3
 FOE_SPEED = 1
-COIN_SAFE_ZONE = 70
-FOE_SAFE_ZONE = 140
+COIN_SAFE_ZONE = 40
+FOE_SAFE_ZONE = 70
 COIN_PROGRESSION_PACE = 1
 FOE_PROGRESSION_PACE = 2
-MAX_COINS = 20
-MAX_FOES = 10
+MAX_COINS = 30
+MAX_FOES = 12
 WAIT_TIME_BETWEEN_LEVELS = 1000
 IMAGES = {
     "robot": "robo.png",
@@ -278,7 +278,7 @@ class Level:
         for n in range(amount):
             while True:
                 location = Point(randrange(0, self.display.get_width() - gridx, gridx), randrange(0, self.display.get_height() - gridy, gridy))
-                if location not in locations or location.x not in range(mid.x - safe_zone, mid.x + safe_zone) and location.y not in range(mid.y - safe_zone, mid.y + safe_zone):
+                if location not in locations and location.x not in range(mid.x - safe_zone, mid.x + safe_zone) and location.y not in range(mid.y - safe_zone, mid.y + safe_zone):
                     locations.append(location)
                     break
         return locations

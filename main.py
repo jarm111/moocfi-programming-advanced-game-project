@@ -293,7 +293,7 @@ class Game:
         self.images = self.load_images()
         self.levelcount = Counter(1)
         self.bestlevel = 1
-        self.level = self.end_of_level_handler("next_level")
+        self.level = self.end_of_level_handler("game_over")
 
     def load_images(self) -> dict[str, pygame.Surface]:
         return {name: pygame.image.load(path) for (name, path) in IMAGES.items()}

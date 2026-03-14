@@ -12,6 +12,7 @@ HUD_FONT_COLOR = (255, 255, 255)
 HUD_HEIGHT = 30
 HUD_FONT = "Arial"
 HUD_FONT_SIZE = 20
+INFO_FONT_SIZE = 40
 LEVEL_TIME_LIMIT = 30
 PLAYER_SPEED = 3
 FOE_SPEED = 1
@@ -139,13 +140,19 @@ class Foe(Renderable):
 class Hud:
     def __init__(self, display: pygame.Surface) -> None:
         self.display = display
-        self.font = pygame.font.SysFont(HUD_FONT, HUD_FONT_SIZE)
+        self.hud_font = pygame.font.SysFont(HUD_FONT, HUD_FONT_SIZE)
+        self.info_font = pygame.font.SysFont(HUD_FONT, INFO_FONT_SIZE)
 
-    def draw(self, coins_remaining: int, time_remaining: int, levelcount: int, bestlevel: int):
+    def draw(self, coins_remaining: int, time_remaining: int, levelcount: int, bestlevel: int, is_game_over: int):
         hud_text = f"Coins remaining: {coins_remaining}   Time remaining: {time_remaining}   Level: {levelcount}   Best Level: {bestlevel}"
+        game_over_text = "GAME OVER"
         pygame.draw.rect(self.display, HUD_BG_COLOR, (0, WINDOW_HEIGHT - HUD_HEIGHT, WINDOW_WIDTH, HUD_HEIGHT))
-        rendered_text = self.font.render(hud_text, True, HUD_FONT_COLOR)
-        self.display.blit(rendered_text, (10, WINDOW_HEIGHT - HUD_HEIGHT + 3))
+        rendered_hud_text = self.hud_font.render(hud_text, True, HUD_FONT_COLOR)
+        rendered_game_over_text = self.info_font.render(game_over_text, True, HUD_FONT_COLOR)
+        self.display.blit(rendered_hud_text, (10, WINDOW_HEIGHT - HUD_HEIGHT + 3))
+        if is_game_over:
+            self.display.blit(rendered_game_over_text, (self.display.get_width() // 2 - rendered_game_over_text.get_width() // 2, self.display.get_height() // 2 - rendered_game_over_text.get_height() // 2))
+
 
 class Timer:
     # Interval in milliseconds
@@ -178,6 +185,7 @@ class Level:
         self.mouse_pos = Point(0, 0)
         self.end_of_level_handler = end_of_level_handler
         self.first_pass = True
+        self.is_game_over = False
         self.game_loop()
 
     def handle_collisions(self) -> None:
@@ -216,7 +224,7 @@ class Level:
         for item in [self.door, *self.coins, *self.foes, self.player]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
-        self.hud.draw(self.coins_remaining(), self.time_remaining.value, self.levelcount, self.bestlevel)
+        self.hud.draw(self.coins_remaining(), self.time_remaining.value, self.levelcount, self.bestlevel, self.is_game_over)
         pygame.display.flip()
 
     def game_loop(self) -> None:
@@ -232,6 +240,10 @@ class Level:
             if self.first_pass:
                 self.wait()
                 self.first_pass = False
+            if self.is_game_over:
+                self.timer.disable()
+                self.wait()
+                self.end_of_level_handler("game_over")
             self.clock.tick(FPS)
 
     def coins_remaining(self):
@@ -245,9 +257,7 @@ class Level:
             self.end_of_level_handler("next_level")
     
     def game_over(self):
-        self.timer.disable()
-        self.wait()
-        self.end_of_level_handler("game_over")
+        self.is_game_over = True
 
     def spawn(self, coin_amount:int, foe_amount:int) -> tuple[Player, Renderable, list[Renderable], list[Foe]]:
         player_location = Point(self.display.get_width() // 2 - self.images["robot"].get_width() // 2, (self.display.get_height() - HUD_HEIGHT) // 2  - self.images["robot"].get_height() // 2)

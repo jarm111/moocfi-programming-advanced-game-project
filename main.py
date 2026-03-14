@@ -141,8 +141,8 @@ class Hud:
         self.display = display
         self.font = pygame.font.SysFont(HUD_FONT, HUD_FONT_SIZE)
 
-    def draw(self, coins_remaining: int, time_remaining: int, levelcount: int):
-        hud_text = f"Coins remaining: {coins_remaining}   Time remaining: {time_remaining}   Level: {levelcount}"
+    def draw(self, coins_remaining: int, time_remaining: int, levelcount: int, bestlevel: int):
+        hud_text = f"Coins remaining: {coins_remaining}   Time remaining: {time_remaining}   Level: {levelcount}   Best Level: {bestlevel}"
         pygame.draw.rect(self.display, HUD_BG_COLOR, (0, WINDOW_HEIGHT - HUD_HEIGHT, WINDOW_WIDTH, HUD_HEIGHT))
         rendered_text = self.font.render(hud_text, True, HUD_FONT_COLOR)
         self.display.blit(rendered_text, (10, WINDOW_HEIGHT - HUD_HEIGHT + 3))
@@ -158,7 +158,7 @@ class Timer:
 
 
 class Level:
-    def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler, number_of_coins: int, number_of_foes: int, levelcount: int) -> None:
+    def __init__(self, display: pygame.Surface, images: dict[str, pygame.Surface], clock: pygame.time.Clock, end_of_level_handler, number_of_coins: int, number_of_foes: int, levelcount: int, bestlevel: int) -> None:
         self.display = display
         self.images = images
         self.clock = clock
@@ -167,6 +167,7 @@ class Level:
         self.time_remaining = Counter(LEVEL_TIME_LIMIT)
         self.timer = Timer(ONE_SECOND_TIMER_EVENT, 1000)
         self.levelcount = levelcount
+        self.bestlevel = bestlevel
 
         player, door, coins, foes = self.spawn(number_of_coins, number_of_foes)
         self.player = player
@@ -215,7 +216,7 @@ class Level:
         for item in [self.door, *self.coins, *self.foes, self.player]:
             image, pos = item.image, (item.x, item.y)
             self.display.blit(image, pos)
-        self.hud.draw(self.coins_remaining(), self.time_remaining.value, self.levelcount)
+        self.hud.draw(self.coins_remaining(), self.time_remaining.value, self.levelcount, self.bestlevel)
         pygame.display.flip()
 
     def game_loop(self) -> None:
@@ -281,6 +282,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.images = self.load_images()
         self.levelcount = Counter(1)
+        self.bestlevel = 1
         self.level = self.end_of_level_handler("next_level")
 
     def load_images(self) -> dict[str, pygame.Surface]:
@@ -290,15 +292,19 @@ class Game:
 
         if condition == "next_level":
             self.levelcount.increment()
-            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression(), self.levelcount.value)
+            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression(), self.levelcount.value, self.bestlevel)
         elif condition == "game_over":
+            self.define_best_level()
             self.levelcount.reset()
-            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression(), self.levelcount.value)
+            self.level = Level(self.display, self.images, self.clock, self.end_of_level_handler, *self.level_progression(), self.levelcount.value, self.bestlevel)
 
     def level_progression(self) -> tuple[int, int]:
         coins = 1 + self.levelcount.value // COIN_PROGRESSION_PACE
         foes = 1 + self.levelcount.value // FOE_PROGRESSION_PACE
         return (coins, foes)
+    
+    def define_best_level(self):
+        self.bestlevel = max(self.bestlevel, self.levelcount.value)
 
 def main():
     Game(WINDOW_WIDTH, WINDOW_HEIGHT)

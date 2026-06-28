@@ -11,10 +11,11 @@ Game project for University of Helsinki's MOOC Advanced Course in Programming 20
 
 ## Gameplay and features
 
-- Collect coins and proceed to next level while evading monsters
+- Collect coins and proceed to next level within time limit while evading monsters
 - Player controlled character follows mouse cursor
 - Coins and monsters have random spawn locations
 - Level progression adds more coins and monsters
+- HUD for time remaining, coins remaining, level, best level
 
 ## Project requirements and limitations
 
